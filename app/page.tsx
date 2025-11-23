@@ -18,16 +18,24 @@ const SingleDatePicker: React.FC<{
   onChange: (date: Date | null) => void;
   className?: string;
   dateFormat?: string;
-}> = ({ selected, onChange, className, dateFormat }) => (
-  <DatePicker
-    selected={selected}
-    onChange={onChange as any} // Type assertion to bypass union
-    selectsMultiple={false}
-    selectsRange={false}
-    className={className}
-    dateFormat={dateFormat}
-  />
-);
+}> = ({ selected, onChange, className, dateFormat }) => {
+  const handleChange = (date: Date | [Date, Date] | null) => {
+    if (date && Array.isArray(date)) {
+      onChange(date[0]); // Take first if somehow array
+    } else {
+      onChange(date);
+    }
+  };
+
+  return (
+    <DatePicker
+      selected={selected}
+      onChange={handleChange}
+      className={className}
+      dateFormat={dateFormat}
+    />
+  );
+};
 
 export default function Home() {
   const [date, setDate] = useState<Date>(new Date('2025-11-23'));
