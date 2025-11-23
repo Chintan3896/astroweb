@@ -1,51 +1,29 @@
-/* Default Styling */
-.card {
-    background: var(--card);
-    border-radius: 16px;
-    border: 1px solid var(--card-border);
+:root{
+    --gold: #D4AF37;
+    --panel: rgba(255,255,255,0.65);
+    --fg: #0b1220;
   }
   
-  .tag {
-    display: inline-block;
-    padding: 3px 10px;
-    margin-top: 6px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-  }
+  /* theme backgrounds */
+  .bg-app-indigo { background: linear-gradient(135deg,#0f172a 0%, #0b1220 60%); color: #f7f7fb; }
+  .bg-app-warm { background: linear-gradient(135deg,#fff7ed 0%, #ffe9c4 60%); color: #2a1a00; }
+  .bg-app-frost { background: linear-gradient(135deg,#e6f0ff 0%, #f0f7fb 60%); color: #03203c; }
+  .bg-app-dark { background: linear-gradient(135deg,#070713 0%, #0b0f1a 60%); color: #e6eefc; }
   
-  .tag.good { background:#d4f7d4; color:#0a6800; }
-  .tag.very\ good { background:#bff5bf; color:#065b00; }
-  .tag.normal { background:#dcecff; color:#003d99; }
-  .tag.bad { background:#ffd8d8; color:#990000; }
+  .text-app-foreground { color: inherit; }
   
-  /* THEMES */
-  .theme-light {
-    --card:#ffffff;
-    --card-border:#e5e5e5;
-    background:#f7f7f7;
-    color:#111;
-  }
+  /* subtle panel */
+  .bg-panel { background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.45)); }
+  .border { border: 1px solid rgba(255,255,255,0.06); }
+  .gap-2 { gap: .5rem; }
   
-  .theme-dark {
-    --card:#0a0f1f;
-    --card-border:#1d2337;
-    background:#050814;
-    color:#fdfdfd;
-  }
+  /* gold color helper */
+  .text-gold { color: var(--gold); }
+  .bg-gold\/10 { background: rgba(212,175,55,0.08); }
+  .ring-gold\/60 { box-shadow: 0 0 0 6px rgba(212,175,55,0.12); }
   
-  .theme-frosted {
-    --card:rgba(255,255,255,0.25);
-    --card-border:rgba(255,255,255,0.4);
-    backdrop-filter:blur(12px);
-    background:#ddebfa;
-    color:#0b233e;
-  }
-  
-  .theme-warm {
-    --card:#ffe7c2;
-    --card-border:#efbf88;
-    background:#ffebd6;
-    color:#442000;
+  /* panel for dark/light differences (you may refine) */
+  @media (prefers-color-scheme: dark) {
+    .bg-panel { background: linear-gradient(180deg, rgba(0,0,0,0.32), rgba(0,0,0,0.2)); }
   }
   
