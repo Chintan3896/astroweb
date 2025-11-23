@@ -1,6 +1,6 @@
 // pages/api/choghadiya.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { computeChoghadiyaForDate, ChoghadiyaEntry } from "../../lib/chogadiya";
+import { computeChoghadiyaForDate, ChoghadiyaEntry } from "../../lib/choghadiya";
 
 type ApiResponse =
   | { ok: true; location: { lat: number; lon: number; tz: string }; date: string; entries: ChoghadiyaEntry[] }
