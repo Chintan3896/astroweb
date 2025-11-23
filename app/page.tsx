@@ -12,7 +12,7 @@ interface Muhurat {
   effect: string;
 }
 
-// Wrapper to fix TS inference for single date
+// Wrapper for DatePicker (TS fix)
 const SingleDatePicker: React.FC<{
   selected: Date;
   onChange: (date: Date | null) => void;
@@ -39,23 +39,35 @@ const SingleDatePicker: React.FC<{
 
 export default function Home() {
   const [date, setDate] = useState<Date>(new Date('2025-11-23'));
+  const [lat, setLat] = useState<number>(19.1667); // Goregaon default
+  const [lon, setLon] = useState<number>(72.85);
   const [location, setLocation] = useState<{ lat: number; lon: number }>({ lat: 19.1667, lon: 72.85 });
   const [data, setData] = useState<{ sunrise: string; sunset: string; muhurats: Muhurat[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
+    // Update location from inputs
+    setLocation({ lat, lon });
+
+    // Try geolocation, but allow manual override
     navigator.geolocation.getCurrentPosition(
-      (pos) => setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
-      () => console.log('Using default location: Mumbai')
+      (pos) => {
+        if (!lat || !lon) { // Only if not manually set
+          setLat(pos.coords.latitude);
+          setLon(pos.coords.longitude);
+          setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
+        }
+      },
+      () => console.log('Using manual location: Mumbai/Goregaon')
     );
     fetchPanchang();
-  }, [date, location]);
+  }, [date, location.lat, location.lon]);
 
   const fetchPanchang = () => {
     setLoading(true);
     try {
       const today = new Date(date);
-      const yesterday = new Date(today.getTime() - 86400000); // 24h in ms
+      const yesterday = new Date(today.getTime() - 86400000);
       const tomorrow = new Date(today.getTime() + 86400000);
 
       const todayTimes = SunCalc.getTimes(today, location.lat, location.lon);
@@ -65,9 +77,20 @@ export default function Home() {
       const sunrise = todayTimes.sunrise!;
       const sunset = todayTimes.sunset!;
       const previousSunset = yesterdayTimes.sunset!;
-      const nextSunrise = tomorrowTimes.sunrise!;
+      // nextSunrise not needed
 
-      const formatTime = (d: Date): string => d.toLocaleTimeString('en-IN', { hour12: false } as const);
+      // Format in IST (force +5:30 if needed; browser default)
+      const formatter = new Intl.DateTimeFormat('en-IN', { 
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit',
+        hour12: false 
+      });
+      const formatTime = (d: Date): string => {
+        const parts = formatter.formatToParts(new Date(d.getTime() + 5.5 * 60 * 60 * 1000)); // Ensure IST offset if browser wrong
+        return parts.map(p => p.value).join(':').slice(0, 8); // HH:MM:SS
+      };
 
       const todaySunriseStr = formatTime(sunrise);
       const todaySunsetStr = formatTime(sunset);
@@ -94,7 +117,7 @@ export default function Home() {
         6: ['Labh', 'Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh'],
       };
 
-      // Night muhurats
+      // Night muhurats (previous sunset to sunrise)
       const nightDuration = sunrise.getTime() - previousSunset.getTime();
       const nightPeriod = nightDuration / 8;
       const nightMuhurats: Muhurat[] = [];
@@ -106,7 +129,7 @@ export default function Home() {
         nightMuhurats.push({ name, start: formatTime(startTime), end: formatTime(endTime), effect });
       }
 
-      // Day muhurats
+      // Day muhurats (sunrise to sunset)
       const dayDuration = sunset.getTime() - sunrise.getTime();
       const dayPeriod = dayDuration / 8;
       const dayMuhurats: Muhurat[] = [];
@@ -153,14 +176,33 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8">
       <div className="container mx-auto p-4 max-w-6xl">
         <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Panchang Choghadiya</h1>
-        <div className="mb-8 text-center">
+        <div className="mb-8 text-center space-y-4">
           <SingleDatePicker
             selected={date}
             onChange={(d: Date | null) => d && setDate(d)}
             className="border-2 border-gray-300 rounded-lg px-4 py-2 shadow-sm focus:border-blue-500"
             dateFormat="MMMM d, yyyy"
           />
-          <p className="mt-3 text-sm text-gray-600">Location: Lat {location.lat.toFixed(4)}, Lon {location.lon.toFixed(4)}</p>
+          <div className="flex justify-center space-x-4 text-sm">
+            <input
+              type="number"
+              step="any"
+              placeholder="Lat (e.g., 19.1667)"
+              value={lat}
+              onChange={(e) => setLat(parseFloat(e.target.value) || 0)}
+              className="border rounded px-2 py-1 w-24"
+            />
+            <input
+              type="number"
+              step="any"
+              placeholder="Lon (e.g., 72.85)"
+              value={lon}
+              onChange={(e) => setLon(parseFloat(e.target.value) || 0)}
+              className="border rounded px-2 py-1 w-24"
+            />
+            <button onClick={() => { setLat(19.1667); setLon(72.85); }} className="px-3 py-1 bg-blue-500 text-white rounded">Mumbai Default</button>
+          </div>
+          <p className="text-sm text-gray-600">Using: Lat {location.lat.toFixed(4)}, Lon {location.lon.toFixed(4)}</p>
         </div>
         {loading ? (
           <div className="text-center py-12">
@@ -194,7 +236,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <p className="text-center text-red-500 py-12">Error loading data. Please refresh and try again.</p>
+          <p className="text-center text-red-500 py-12">Error loading data. Check console & location.</p>
         )}
       </div>
     </div>
