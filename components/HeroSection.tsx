@@ -20,94 +20,51 @@ export default function HeroSection({
   theme: "light" | "dark" | "warm";
   setTheme: (t: any) => void;
 }) {
-  // map theme to hero gradient classes (keeps old UI aesthetic)
-  const heroGradient =
-    theme === "dark"
-      ? "bg-gradient-to-br from-slate-800 via-indigo-900 to-slate-900 text-white"
-      : theme === "warm"
-      ? "bg-gradient-to-br from-yellow-50 via-orange-100 to-amber-50"
-      : "bg-gradient-to-br from-blue-50 via-blue-100 to-indigo-100";
-
-  const textColor = theme === "dark" ? "text-white" : "text-gray-800";
+  // root text colors (kept simple to match screenshot)
+  const titleColor = theme === "dark" ? "text-white" : "text-gray-900";
   const muted = theme === "dark" ? "text-slate-300" : "text-gray-500";
 
   return (
-    <header className="rounded-2xl overflow-hidden relative">
-      <div className={`p-6 md:p-8 rounded-2xl border shadow-xl ${heroGradient}`}>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex-1 min-w-0">
-            <div className={`text-sm ${muted}`}>Location</div>
-            <div className={`text-lg md:text-xl font-semibold ${textColor}`}>
-              {`Lat ${location.lat.toFixed(4)}, Lon ${location.lon.toFixed(4)}`}
-            </div>
+    <header className="mb-8">
+      {/* page title centered like screenshot */}
+      <div className="text-center">
+        <h1 className={`font-extrabold text-3xl md:text-4xl mb-4 ${titleColor}`}>Panchang Choghadiya</h1>
 
-            <div className="mt-4 flex items-center gap-4">
-              <div>
-                <div className={`text-xs ${muted}`}>Date</div>
-                <DatePicker
-                  selected={date}
-                  onChange={(d: Date | null) => d && setDate(d)}
-                  dateFormat="dd MMM yyyy"
-                  className={`mt-1 bg-transparent outline-none text-base font-medium ${theme === "dark" ? "text-white" : "text-gray-800"}`}
-                />
-              </div>
-
-              <div className="hidden md:flex items-center gap-2">
-                <div className={`text-xs ${muted}`}>Theme</div>
-                <div>
-                  {/* small inline selector to not duplicate ThemeSelector component here */}
-                  <select
-                    value={theme}
-                    onChange={(e) => setTheme(e.target.value as "light" | "dark" | "warm")}
-                    className="rounded-lg px-3 py-2 bg-white/10 border"
-                    aria-label="Select theme"
-                  >
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="warm">Warm</option>
-                  </select>
-                </div>
-              </div>
-            </div>
+        {/* centered date picker in small rounded white box */}
+        <div className="inline-block">
+          <div className="bg-white rounded-md shadow-sm px-4 py-2">
+            <DatePicker
+              selected={date}
+              onChange={(d: Date | null) => d && setDate(d)}
+              dateFormat="MMMM d, yyyy"
+              className="outline-none text-sm"
+            />
           </div>
-
-          <div className="w-full md:w-56 text-right">
-            <div className={`text-sm ${muted}`}>Now</div>
-            <div className="text-2xl md:text-3xl font-extrabold leading-tight">
-              <span className={textColor}>{current ? current.name : "—"}</span>
-            </div>
-
-            <div className="text-sm mt-2">
-              {current ? (
-                <>
-                  <div className={`${muted}`}>Start: <strong className={textColor}>{current.startStr}</strong></div>
-                  <div className={`${muted}`}>End: <strong className={textColor}>{current.endStr}</strong></div>
-                </>
-              ) : (
-                <div className="opacity-80 text-sm md:text-base">No active choghadiya</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="rounded-xl p-3 border flex flex-col items-start bg-white/70 dark:bg-white/5">
-            <div className={`text-xs ${muted}`}>Sunrise</div>
-            <div className="text-lg font-semibold text-yellow-800">{sunInfo.sunrise || "—"}</div>
-          </div>
-
-          <div className="rounded-xl p-3 border flex flex-col items-start bg-white/70 dark:bg-white/5">
-            <div className={`text-xs ${muted}`}>Sunset</div>
-            <div className="text-lg font-semibold text-orange-700">{sunInfo.sunset || "—"}</div>
-          </div>
+          <div className={`text-xs mt-2 ${muted}`}>Location: Lat {location.lat.toFixed(4)}, Lon {location.lon.toFixed(4)}</div>
         </div>
       </div>
 
-      {/* Decorative subtle accent in the hero corner to mimic the old UI look */}
-      <div className="pointer-events-none absolute -bottom-6 left-6 opacity-10">
-        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="60" cy="60" r="60" fill="currentColor" className="text-indigo-200" />
-        </svg>
+      {/* big Sunrise & Sunset card */}
+      <div className="mt-8">
+        <div className="bg-white rounded-xl shadow-md border p-6 md:p-8">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Sunrise & Sunset</h2>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="w-full sm:w-1/2 text-center sm:text-left">
+              <div className="inline-block bg-yellow-50 border rounded px-3 py-1 font-mono">
+                <span className="text-xs text-yellow-800">Sunrise: </span>
+                <span className="font-medium">{sunInfo.sunrise || "—"}</span>
+              </div>
+            </div>
+
+            <div className="w-full sm:w-1/2 text-center sm:text-right">
+              <div className="inline-block bg-orange-50 border rounded px-3 py-1 font-mono">
+                <span className="text-xs text-orange-800">Sunset: </span>
+                <span className="font-medium">{sunInfo.sunset || "—"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
   );

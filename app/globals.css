@@ -1,49 +1,15 @@
-/* Theme colors + utilities */
+/* optional — paste into globals.css */
 :root {
-    --muted: rgba(0,0,0,0.55);
-    --accent: #D98E1B; /* saffron-gold accent for 'warm' */
+    --bg-grad-start: #eef6ff; /* pale blue */
+    --bg-grad-end: #ebf3ff;
   }
   
-  /* app theme backgrounds */
-  .app-theme-light { background: linear-gradient(180deg,#e6f3ff 0%, #ffffff 100%); color: #042339; }
-  .app-theme-dark { background: linear-gradient(180deg,#04102b 0%, #0b1220 100%); color: #e8eefc; }
-  .app-theme-warm { background: linear-gradient(180deg,#fff6ed 0%, #ffecdb 100%); color: #3a2200; }
-  
-  /* hero gradient + subtle waves */
-  .bg-hero {
-    background: linear-gradient(135deg, rgba(14,58,99,0.9), rgba(9,30,61,0.6));
+  body {
+    background: linear-gradient(180deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
   }
   
-  /* for our hero we add a CSS class */
-  .bg-hero-gradient {
-    background: linear-gradient(135deg, rgba(14,58,99,0.95), rgba(8,23,51,0.9));
-    color: white;
+  /* small utility used in some components */
+  .text-muted {
+    color: #6b7280;
   }
-  
-  /* panels and cards */
-  .bg-panel {
-    background: rgba(255,255,255,0.7);
-    backdrop-filter: blur(6px);
-  }
-  .app-theme-dark .bg-panel {
-    background: rgba(10,12,20,0.45);
-  }
-  
-  /* helper classes */
-  .text-muted { color: rgba(0,0,0,0.55); }
-  .app-theme-dark .text-muted { color: rgba(255,255,255,0.7); }
-  
-  /* small scale transform utilities */
-  .scale-102 { transform: scale(1.02); }
-  .hover\\:scale-101:hover { transform: scale(1.01); }
-  
-  /* rings */
-  .ring-yellow-300 { box-shadow: 0 0 0 6px rgba(249,186,62,0.18); }
-  
-  /* active accent */
-  .bg-accent\/6 { background: rgba(217,142,27,0.06); }
-  
-  /* borders for card */
-  .border { border: 1px solid rgba(0,0,0,0.06); }
-  .app-theme-dark .border { border: 1px solid rgba(255,255,255,0.04); }
   

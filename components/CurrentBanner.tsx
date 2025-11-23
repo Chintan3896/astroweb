@@ -30,19 +30,19 @@ export default function CurrentBanner({ current, theme }: { current: any | null;
     return `${m}m ${s}s`;
   };
 
-  const themeBg = theme === "dark" ? "bg-gradient-to-r from-slate-800 to-indigo-900 text-white" : theme === "warm" ? "bg-amber-50" : "bg-white";
-
   return (
-    <div className={`rounded-xl p-3 border shadow-md ${themeBg} flex items-center justify-between`}>
-      <div>
-        <div className="text-xs text-muted">Current</div>
-        <div className="text-lg font-bold">{current ? current.name : "—"}</div>
-        <div className="text-sm opacity-75">{current ? `${current.startStr} — ${current.endStr}` : "No active choghadiya"}</div>
-      </div>
+    <div className="rounded-xl p-3 border shadow-md bg-white">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-xs text-gray-500">Current</div>
+          <div className="text-lg font-bold text-gray-800">{current ? current.name : "—"}</div>
+          <div className="text-sm text-gray-600">{current ? `${current.startStr} — ${current.endStr}` : "No active choghadiya"}</div>
+        </div>
 
-      <div className="text-right">
-        <div className="text-xs text-muted">Ends in</div>
-        <div className="font-mono font-semibold text-lg">{format(secsLeft)}</div>
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Ends in</div>
+          <div className="font-mono font-semibold text-gray-800">{format(secsLeft)}</div>
+        </div>
       </div>
     </div>
   );
