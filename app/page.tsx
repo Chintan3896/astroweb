@@ -108,8 +108,6 @@ export default function Home() {
           }}
           className="border px-3 py-2 rounded-lg"
           dateFormat="dd MMMM yyyy"
-          selectsRange={false}
-          selectsMultiple={false}
         />
 
         </div>
