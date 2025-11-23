@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import type { DateTimeFormatOptions } from 'intl'; // For better TS on toLocaleDateString
 
 interface Muhurat {
   name: string;
@@ -13,10 +14,10 @@ interface Muhurat {
 }
 
 export default function Home() {
-  const [date, setDate] = useState(new Date('2025-11-23')); // Default to screenshot date
-  const [location, setLocation] = useState({ lat: 19.1667, lon: 72.85 }); // Default: Goregaon, Mumbai
+  const [date, setDate] = useState<Date>(new Date('2025-11-23')); // Default to screenshot date
+  const [location, setLocation] = useState<{ lat: number; lon: number }>({ lat: 19.1667, lon: 72.85 }); // Default: Goregaon, Mumbai
   const [data, setData] = useState<{ sunrise: string; sunset: string; muhurats: Muhurat[] } | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     navigator.geolocation.getCurrentPosition(
@@ -149,7 +150,8 @@ export default function Home() {
       <div className="mb-6 text-center">
         <DatePicker
           selected={date}
-          onChange={(d) => setDate(d!)}
+          onChange={(d: Date | null) => setDate(d!)}
+          selectsMultiple={false}
           className="border rounded px-3 py-2"
           dateFormat="MMMM d, yyyy"
         />
@@ -170,7 +172,11 @@ export default function Home() {
                 <h3 className="font-bold text-lg">{m.name}</h3>
                 <p className="text-sm">Start: <span className="font-mono">{m.start}</span></p>
                 <p className="text-sm">End: <span className="font-mono">{m.end}</span></p>
-                <p className={`text-sm font-medium ${m.effect === 'Very Good' ? 'text-green-700' : m.effect === 'Good' ? 'text-green-600' : m.effect === 'Normal' ? 'text-blue-600' : 'text-red-600'}`}>
+                <p className={`text-sm font-medium ${
+                  m.effect === 'Very Good' ? 'text-green-700' :
+                  m.effect === 'Good' ? 'text-green-600' :
+                  m.effect === 'Normal' ? 'text-blue-600' : 'text-red-600'
+                }`}>
                   Effect: {m.effect}
                 </p>
               </div>
