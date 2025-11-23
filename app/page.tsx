@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import SunCalc from 'suncalc';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import type { DateTimeFormatOptions } from 'intl';
 
 interface Muhurat {
   name: string;
@@ -60,7 +59,7 @@ export default function Home() {
       const previousSunset = yesterdayTimes.sunset!;
       const nextSunrise = tomorrowTimes.sunrise!;
 
-      const formatTime = (d: Date): string => d.toLocaleTimeString('en-IN', { hour12: false } as DateTimeFormatOptions);
+      const formatTime = (d: Date): string => d.toLocaleTimeString('en-IN', { hour12: false } as const);
 
       const todaySunriseStr = formatTime(sunrise);
       const todaySunsetStr = formatTime(sunset);
