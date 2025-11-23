@@ -38,7 +38,7 @@ const SingleDatePicker: React.FC<{
 };
 
 export default function Home() {
-  const [date, setDate] = useState<Date>(new Date('2025-11-23'));
+  const [date, setDate] = useState<Date>(new Date());
   const [location, setLocation] = useState<{ lat: number; lon: number }>({ lat: 19.1667, lon: 72.85 });
   const [data, setData] = useState<{ sunrise: string; sunset: string; muhurats: Muhurat[] } | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -58,9 +58,9 @@ export default function Home() {
       const yesterday = new Date(today.getTime() - 86400000); // 24h in ms
       const tomorrow = new Date(today.getTime() + 86400000);
 
-      const todayTimes = SunCalc.getTimes(today, location.lat, location.lon);
-      const yesterdayTimes = SunCalc.getTimes(yesterday, location.lat, location.lon);
-      const tomorrowTimes = SunCalc.getTimes(tomorrow, location.lat, location.lon);
+      const todayTimes = SunCalc.getTimes(today, location.lat, location.lon, 10);
+      const yesterdayTimes = SunCalc.getTimes(yesterday, location.lat, location.lon, 10);
+      const tomorrowTimes = SunCalc.getTimes(tomorrow, location.lat, location.lon, 10);
 
       const sunrise = todayTimes.sunrise!;
       const sunset = todayTimes.sunset!;
@@ -76,22 +76,22 @@ export default function Home() {
       const previousWeekday = yesterday.getDay();
 
       const daySequences: Record<number, string[]> = {
-        0: ['Udveg', 'Chal', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg'],
-        1: ['Chal', 'Kaal', 'Shubh', 'Rog', 'Udveg', 'Amrit', 'Labh', 'Chal'],
-        2: ['Rog', 'Udveg', 'Amrit', 'Shubh', 'Chal', 'Labh', 'Kaal', 'Rog'],
-        3: ['Labh', 'Amrit', 'Rog', 'Shubh', 'Chal', 'Kaal', 'Udveg', 'Labh'],
-        4: ['Shubh', 'Rog', 'Labh', 'Chal', 'Udveg', 'Amrit', 'Kaal', 'Shubh'],
-        5: ['Chal', 'Labh', 'Shubh', 'Kaal', 'Udveg', 'Rog', 'Amrit', 'Chal'],
-        6: ['Kaal', 'Shubh', 'Chal', 'Udveg', 'Amrit', 'Rog', 'Labh', 'Kaal'],
+        0: ['Udveg', 'Chal', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg'], // Sunday
+        1: ['Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg', 'Labh', 'Amrit', 'Kaal'], // Monday (Drik)
+        2: ['Rog', 'Udveg', 'Amrit', 'Shubh', 'Chal', 'Labh', 'Kaal', 'Rog'], // Tuesday
+        3: ['Shubh', 'Amrit', 'Rog', 'Kaal', 'Labh', 'Udveg', 'Chal', 'Shubh'], // Wednesday
+        4: ['Kaal', 'Shubh', 'Chal', 'Udveg', 'Amrit', 'Rog', 'Labh', 'Kaal'], // Thursday
+        5: ['Labh', 'Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh'], // Friday
+        6: ['Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh', 'Udveg'], // Saturday
       };
       const nightSequences: Record<number, string[]> = {
-        0: ['Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Udveg', 'Labh', 'Shubh'],
-        1: ['Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit', 'Chal'],
-        2: ['Kaal', 'Labh', 'Udveg', 'Shubh', 'Amrit', 'Rog', 'Chal', 'Kaal'],
-        3: ['Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Labh', 'Kaal', 'Udveg'],
-        4: ['Amrit', 'Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit'],
-        5: ['Rog', 'Kaal', 'Shubh', 'Udveg', 'Amrit', 'Chal', 'Labh', 'Rog'],
-        6: ['Labh', 'Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh'],
+        0: ['Labh', 'Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh'], // Sunday night (Drik variant)
+        1: ['Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit', 'Chal'], // Monday night
+        2: ['Kaal', 'Labh', 'Udveg', 'Shubh', 'Amrit', 'Rog', 'Chal', 'Kaal'], // Tuesday night
+        3: ['Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Labh', 'Kaal', 'Udveg'], // Wednesday night
+        4: ['Amrit', 'Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit'], // Thursday night
+        5: ['Rog', 'Kaal', 'Shubh', 'Udveg', 'Amrit', 'Chal', 'Labh', 'Rog'], // Friday night
+        6: ['Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Udveg', 'Labh', 'Shubh'], // Saturday night
       };
 
       // Night muhurats
