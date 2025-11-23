@@ -30,8 +30,10 @@ export default function CurrentBanner({ current, theme }: { current: any | null;
     return `${m}m ${s}s`;
   };
 
+  const themeBg = theme === "dark" ? "bg-gradient-to-r from-slate-800 to-indigo-900 text-white" : theme === "warm" ? "bg-amber-50" : "bg-white";
+
   return (
-    <div className={`rounded-xl p-3 border shadow-md bg-panel flex items-center justify-between`}>
+    <div className={`rounded-xl p-3 border shadow-md ${themeBg} flex items-center justify-between`}>
       <div>
         <div className="text-xs text-muted">Current</div>
         <div className="text-lg font-bold">{current ? current.name : "—"}</div>
@@ -40,7 +42,7 @@ export default function CurrentBanner({ current, theme }: { current: any | null;
 
       <div className="text-right">
         <div className="text-xs text-muted">Ends in</div>
-        <div className="font-mono font-semibold">{format(secsLeft)}</div>
+        <div className="font-mono font-semibold text-lg">{format(secsLeft)}</div>
       </div>
     </div>
   );
