@@ -1,7 +1,7 @@
- 'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
-import { getPanchanga } from '@bidyashish/panchang';
+import SunCalc from 'suncalc';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
@@ -13,63 +13,104 @@ interface Muhurat {
 }
 
 export default function Home() {
-  const [date, setDate] = useState(new Date());
-  const [location, setLocation] = useState({ lat: 19.0760, lon: 72.8777 }); // Default: Mumbai
-  const [timezone, setTimezone] = useState('Asia/Kolkata'); // Default IST
+  const [date, setDate] = useState(new Date('2025-11-23')); // Default to screenshot date
+  const [location, setLocation] = useState({ lat: 19.1667, lon: 72.85 }); // Default: Goregaon, Mumbai
   const [data, setData] = useState<{ sunrise: string; sunset: string; muhurats: Muhurat[] } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get location
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-        },
-        () => {
-          console.log('Using default location');
-        }
-      );
-    }
-
-    // Get timezone
-    const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    setTimezone(userTz);
-
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setLocation({ lat: pos.coords.latitude, lon: pos.coords.longitude }),
+      () => console.log('Using default location: Mumbai')
+    );
     fetchPanchang();
-  }, [date, location, timezone]);
+  }, [date, location]);
 
-  const fetchPanchang = async () => {
+  const fetchPanchang = () => {
     setLoading(true);
     try {
-      const yesterday = new Date(date);
-      yesterday.setDate(date.getDate() - 1);
+      const today = new Date(date);
+      const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+      const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
-      const panchangaYesterday = await getPanchanga(yesterday, location.lat, location.lon, timezone);
-      const panchanga = await getPanchanga(date, location.lat, location.lon, timezone);
+      // Get times using SunCalc (pure JS)
+      const todayTimes = SunCalc.getTimes(today, location.lat, location.lon);
+      const yesterdayTimes = SunCalc.getTimes(yesterday, location.lat, location.lon);
+      const tomorrowTimes = SunCalc.getTimes(tomorrow, location.lat, location.lon);
 
-      const sunrise = panchanga.sunrise;
-      const sunset = panchanga.sunset;
-      const sunsetYesterday = panchangaYesterday.sunset;
+      const sunrise = todayTimes.sunrise;
+      const sunset = todayTimes.sunset;
+      const previousSunset = yesterdayTimes.sunset;
+      const nextSunrise = tomorrowTimes.sunrise;
 
-      const nextSunrise = sunrise; // for night end
+      // Format times
+      const formatTime = (d: Date) => d.toLocaleTimeString('en-IN', { hour12: false });
 
-      const weekday = date.getDay(); // 0 = Sun
-      const weekdayYesterday = yesterday.getDay();
+      const todaySunriseStr = formatTime(sunrise);
+      const todaySunsetStr = formatTime(sunset);
 
-      const muhurats = calculateChoghadiya(
-        sunsetYesterday,
-        sunrise,
-        sunset,
-        weekdayYesterday,
-        weekday,
-        timezone
-      );
+      // Weekday (0=Sun, 6=Sat)
+      const todayWeekday = today.getDay();
+      const previousWeekday = yesterday.getDay();
+
+      // Sequences from standard Drik Panchang (8 periods, repeat first for 8th)
+      const daySequences: { [key: number]: string[] } = {
+        0: ['Udveg', 'Chal', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg'], // Sunday
+        1: ['Chal', 'Kaal', 'Shubh', 'Rog', 'Udveg', 'Amrit', 'Labh', 'Chal'], // Monday
+        2: ['Rog', 'Udveg', 'Amrit', 'Shubh', 'Chal', 'Labh', 'Kaal', 'Rog'], // Tuesday
+        3: ['Labh', 'Amrit', 'Rog', 'Shubh', 'Chal', 'Kaal', 'Udveg', 'Labh'], // Wednesday
+        4: ['Shubh', 'Rog', 'Labh', 'Chal', 'Udveg', 'Amrit', 'Kaal', 'Shubh'], // Thursday
+        5: ['Chal', 'Labh', 'Shubh', 'Kaal', 'Udveg', 'Rog', 'Amrit', 'Chal'], // Friday
+        6: ['Kaal', 'Shubh', 'Chal', 'Udveg', 'Amrit', 'Rog', 'Labh', 'Kaal'], // Saturday
+      };
+      const nightSequences: { [key: number]: string[] } = {
+        0: ['Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Udveg', 'Labh', 'Shubh'], // Sunday night
+        1: ['Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit', 'Chal'], // Monday night
+        2: ['Kaal', 'Labh', 'Udveg', 'Shubh', 'Amrit', 'Rog', 'Chal', 'Kaal'], // Tuesday night
+        3: ['Udveg', 'Shubh', 'Amrit', 'Chal', 'Rog', 'Labh', 'Kaal', 'Udveg'], // Wednesday night
+        4: ['Amrit', 'Chal', 'Rog', 'Kaal', 'Labh', 'Shubh', 'Udveg', 'Amrit'], // Thursday night
+        5: ['Rog', 'Kaal', 'Shubh', 'Udveg', 'Amrit', 'Chal', 'Labh', 'Rog'], // Friday night
+        6: ['Labh', 'Udveg', 'Amrit', 'Rog', 'Shubh', 'Kaal', 'Chal', 'Labh'], // Saturday night
+      };
+
+      // Calculate night muhurats (previous sunset to sunrise, using previous weekday night sequence)
+      const nightDuration = sunrise.getTime() - previousSunset.getTime();
+      const nightPeriod = nightDuration / 8;
+      const nightMuhurats: Muhurat[] = [];
+      for (let i = 0; i < 8; i++) {
+        const startTime = new Date(previousSunset.getTime() + i * nightPeriod);
+        const endTime = new Date(previousSunset.getTime() + (i + 1) * nightPeriod);
+        const name = nightSequences[previousWeekday][i];
+        const effect = getEffect(name);
+        nightMuhurats.push({
+          name,
+          start: formatTime(startTime),
+          end: formatTime(endTime),
+          effect,
+        });
+      }
+
+      // Calculate day muhurats (sunrise to sunset, using today weekday day sequence)
+      const dayDuration = sunset.getTime() - sunrise.getTime();
+      const dayPeriod = dayDuration / 8;
+      const dayMuhurats: Muhurat[] = [];
+      for (let i = 0; i < 8; i++) {
+        const startTime = new Date(sunrise.getTime() + i * dayPeriod);
+        const endTime = new Date(sunrise.getTime() + (i + 1) * dayPeriod);
+        const name = daySequences[todayWeekday][i];
+        const effect = getEffect(name);
+        dayMuhurats.push({
+          name,
+          start: formatTime(startTime),
+          end: formatTime(endTime),
+          effect,
+        });
+      }
 
       setData({
-        sunrise: sunrise.toLocaleTimeString([], { timeZone: timezone }),
-        sunset: sunset.toLocaleTimeString([], { timeZone: timezone }),
-        muhurats,
+        sunrise: todaySunriseStr,
+        sunset: todaySunsetStr,
+        muhurats: [...nightMuhurats, ...dayMuhurats], // Full 16 for the day
       });
     } catch (error) {
       console.error('Calculation error:', error);
@@ -78,118 +119,66 @@ export default function Home() {
     }
   };
 
-  const calculateChoghadiya = (
-    sunsetYesterday: Date,
-    sunrise: Date,
-    sunset: Date,
-    weekdayYesterday: number,
-    weekday: number,
-    tz: string
-  ): Muhurat[] => {
-    const muhurats: Muhurat[] = [];
-
-    const daySequences = [
-      ['Udveg', 'Chal', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg'], // Sun
-      ['Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg', 'Chal', 'Labh', 'Amrit'], // Mon
-      ['Rog', 'Udveg', 'Chal', 'Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog'], // Tue
-      ['Labh', 'Amrit', 'Kaal', 'Shubh', 'Rog', 'Udveg', 'Chal', 'Labh'], // Wed
-      ['Shubh', 'Rog', 'Udveg', 'Chal', 'Kaal', 'Labh', 'Amrit', 'Shubh'], // Thu
-      ['Chal', 'Labh', 'Shubh', 'Kaal', 'Udveg', 'Amrit', 'Rog', 'Chal'], // Fri
-      ['Kaal', 'Shubh', 'Rog', 'Udveg', 'Amrit', 'Chal', 'Labh', 'Kaal']  // Sat
-    ];
-
-    const nightSequences = [
-      ['Shubh', 'Amrit', 'Chal', 'Rog', 'Kaal', 'Labh', 'Udveg', 'Shubh'], // Sun
-      ['Chal', 'Rog', 'Kaal', 'Labh', 'Udveg', 'Amrit', 'Shubh', 'Chal'], // Mon
-      ['Kaal', 'Labh', 'Udveg', 'Amrit', 'Shubh', 'Chal', 'Rog', 'Kaal'], // Tue
-      ['Udveg', 'Amrit', 'Rog', 'Chal', 'Labh', 'Shubh', 'Kaal', 'Udveg'], // Wed
-      ['Amrit', 'Chal', 'Shubh', 'Kaal', 'Rog', 'Udveg', 'Labh', 'Amrit'], // Thu
-      ['Rog', 'Kaal', 'Chal', 'Udveg', 'Amrit', 'Labh', 'Shubh', 'Rog'], // Fri
-      ['Labh', 'Udveg', 'Amrit', 'Shubh', 'Chal', 'Kaal', 'Rog', 'Labh']  // Sat
-    ];
-
-    const effects: { [key: string]: string } = {
-      Amrit: 'Very Good',
-      Shubh: 'Good',
-      Labh: 'Good',
-      Chal: 'Normal',
-      Rog: 'Bad',
-      Kaal: 'Bad',
-      Udveg: 'Bad'
-    };
-
-    // Night Choghadiya (previous night)
-    const nightDuration = sunrise.getTime() - sunsetYesterday.getTime();
-    const nightInterval = nightDuration / 8;
-    const nightSequence = nightSequences[weekdayYesterday];
-
-    for (let i = 0; i < 8; i++) {
-      const startTime = new Date(sunsetYesterday.getTime() + i * nightInterval);
-      const endTime = new Date(sunsetYesterday.getTime() + (i + 1) * nightInterval);
-      const name = nightSequence[i];
-      muhurats.push({
-        name,
-        start: startTime.toLocaleTimeString([], { timeZone: tz }),
-        end: endTime.toLocaleTimeString([], { timeZone: tz }),
-        effect: effects[name],
-      });
+  const getEffect = (name: string): string => {
+    switch (name) {
+      case 'Amrit': return 'Very Good';
+      case 'Labh':
+      case 'Shubh': return 'Good';
+      case 'Chal':
+      case 'Char': return 'Normal';
+      case 'Rog':
+      case 'Kaal':
+      case 'Udveg': return 'Bad';
+      default: return 'Normal';
     }
-
-    // Day Choghadiya
-    const dayDuration = sunset.getTime() - sunrise.getTime();
-    const dayInterval = dayDuration / 8;
-    const daySequence = daySequences[weekday];
-
-    for (let i = 0; i < 8; i++) {
-      const startTime = new Date(sunrise.getTime() + i * dayInterval);
-      const endTime = new Date(sunrise.getTime() + (i + 1) * dayInterval);
-      const name = daySequence[i];
-      muhurats.push({
-        name,
-        start: startTime.toLocaleTimeString([], { timeZone: tz }),
-        end: endTime.toLocaleTimeString([], { timeZone: tz }),
-        effect: effects[name],
-      });
-    }
-
-    return muhurats;
   };
 
   const getEffectColor = (effect: string) => {
     switch (effect) {
-      case 'Very Good': return 'text-green-700';
-      case 'Good': return 'text-green-500';
-      case 'Normal': return 'text-blue-500';
-      case 'Bad': return 'text-red-500';
-      default: return 'text-gray-500';
+      case 'Very Good': return 'text-green-700 bg-green-100';
+      case 'Good': return 'text-green-500 bg-green-50';
+      case 'Normal': return 'text-blue-500 bg-blue-50';
+      case 'Bad': return 'text-red-500 bg-red-50';
+      default: return 'text-gray-500 bg-gray-50';
     }
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Panchang for {date.toDateString()}</h1>
-      <DatePicker selected={date} onChange={(d) => setDate(d!)} className="mb-4" />
+    <div className="container mx-auto p-4 max-w-4xl">
+      <h1 className="text-3xl font-bold mb-6 text-center">Panchang Choghadiya for {date.toLocaleDateString('en-IN')}</h1>
+      <div className="mb-6 text-center">
+        <DatePicker
+          selected={date}
+          onChange={(d) => setDate(d!)}
+          className="border rounded px-3 py-2"
+          dateFormat="MMMM d, yyyy"
+        />
+        <p className="mt-2 text-sm">Location: {location.lat.toFixed(4)}, {location.lon.toFixed(4)}</p>
+      </div>
       {loading ? (
-        <p>Loading...</p>
+        <p className="text-center">Calculating muhurats...</p>
       ) : data ? (
-        <>
-          <div className="mb-4">
-            <p>Sunrise: {data.sunrise}</p>
-            <p>Sunset: {data.sunset}</p>
+        <div className="space-y-6">
+          <div className="bg-white p-4 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-2">Sunrise & Sunset</h2>
+            <p>Sunrise: <span className="font-mono">{data.sunrise}</span></p>
+            <p>Sunset: <span className="font-mono">{data.sunset}</span></p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {data.muhurats.map((m, i) => (
-              <div key={i} className="bg-white p-4 rounded shadow">
-                <h2 className="font-semibold">{m.name}</h2>
-                <p>Start: {m.start}</p>
-                <p>End: {m.end}</p>
-                <p className={getEffectColor(m.effect)}>Effect: {m.effect}</p>
+              <div key={i} className={`p-4 rounded-lg shadow ${getEffectColor(m.effect)}`}>
+                <h3 className="font-bold text-lg">{m.name}</h3>
+                <p className="text-sm">Start: <span className="font-mono">{m.start}</span></p>
+                <p className="text-sm">End: <span className="font-mono">{m.end}</span></p>
+                <p className={`text-sm font-medium ${m.effect === 'Very Good' ? 'text-green-700' : m.effect === 'Good' ? 'text-green-600' : m.effect === 'Normal' ? 'text-blue-600' : 'text-red-600'}`}>
+                  Effect: {m.effect}
+                </p>
               </div>
             ))}
           </div>
-        </>
+        </div>
       ) : (
-        <p>Error loading data</p>
+        <p className="text-center text-red-500">Error loading data. Check console.</p>
       )}
     </div>
   );
