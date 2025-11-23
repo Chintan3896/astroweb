@@ -20,8 +20,8 @@ const SingleDatePicker: React.FC<{
   dateFormat?: string;
 }> = ({ selected, onChange, className, dateFormat }) => {
   const handleChange = (date: Date | [Date, Date] | null) => {
-    if (date && Array.isArray(date)) {
-      onChange(date[0]); // Take first if somehow array
+    if (Array.isArray(date)) {
+      onChange(date[0]);
     } else {
       onChange(date);
     }
