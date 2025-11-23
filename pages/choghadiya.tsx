@@ -17,7 +17,7 @@ type Entry = {
 };
 
 const DEFAULT = {
-  lat: 19.0760,
+  lat: 19.076,
   lon: 72.8777,
   tz: "Asia/Kolkata",
 };
@@ -48,12 +48,22 @@ export default function ChoghadiyaPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // client-only derived state for share URL (avoid window access during SSR)
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   useEffect(() => {
-    // when lat/lon/date change, persist and update query params (but shallow)
+    if (typeof window !== "undefined") {
+      const qp = new URLSearchParams({ lat: String(lat), lon: String(lon), date, tz });
+      setShareUrl(`${window.location.origin}${router.pathname}?${qp.toString()}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lat, lon, date, tz]);
+
+  useEffect(() => {
+    // when lat/lon/date change, persist and update URL query params (shallow)
     setSaved({ lat, lon, date, tz });
     const qp: Record<string, string> = { lat: String(lat), lon: String(lon), date, tz };
+    // router.replace on client only; in SSR this effect won't run
     router.replace({ pathname: router.pathname, query: qp }, undefined, { shallow: true });
-    // fetch
     fetchEntries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lat, lon, date, tz]);
@@ -79,7 +89,7 @@ export default function ChoghadiyaPage() {
   }
 
   function handleUseMyLocation() {
-    if (!navigator.geolocation) {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
       alert("Geolocation not supported");
       return;
     }
@@ -94,9 +104,20 @@ export default function ChoghadiyaPage() {
     );
   }
 
-  function buildShareUrl() {
-    const qp = new URLSearchParams({ lat: String(lat), lon: String(lon), date, tz });
-    return `${window.location.origin}${router.pathname}?${qp.toString()}`;
+  function handleCopyShareUrl() {
+    if (!shareUrl) {
+      alert("Share URL not ready yet");
+      return;
+    }
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(shareUrl).then(
+        () => alert("Share URL copied"),
+        () => alert("Could not copy share URL")
+      );
+    } else {
+      // fallback
+      alert("Clipboard not available");
+    }
   }
 
   return (
@@ -130,9 +151,7 @@ export default function ChoghadiyaPage() {
         <div>
           <label style={{ display: "block", fontWeight: 600 }}>Actions</label>
           <button onClick={handleUseMyLocation} style={{ display: "block", marginBottom: 8 }}>Use my location</button>
-          <a href={buildShareUrl()} onClick={(e) => e.preventDefault()} style={{ display: "inline-block", marginTop: 4 }} onMouseDown={() => { navigator.clipboard?.writeText(buildShareUrl()); alert("Share URL copied"); }}>
-            Copy share URL
-          </a>
+          <button onClick={handleCopyShareUrl} style={{ display: "block" }}>Copy share URL</button>
         </div>
       </section>
 
@@ -158,8 +177,16 @@ export default function ChoghadiyaPage() {
           {entries.map((e) => {
             const start = new Date(e.startUTC);
             const end = new Date(e.endUTC);
-            const startLocal = start.toLocaleString(undefined, { timeZone: tz });
-            const endLocal = end.toLocaleString(undefined, { timeZone: tz });
+            // Use Intl formatting with provided tz; if tz invalid, fallback to system locale
+            let startLocal: string;
+            let endLocal: string;
+            try {
+              startLocal = start.toLocaleString(undefined, { timeZone: tz });
+              endLocal = end.toLocaleString(undefined, { timeZone: tz });
+            } catch {
+              startLocal = start.toLocaleString();
+              endLocal = end.toLocaleString();
+            }
             const color =
               e.quality === "very_good" ? "#2b8a3e" : e.quality === "good" ? "#4caf50" : e.quality === "neutral" ? "#f0ad4e" : "#d9534f";
             return (
@@ -173,7 +200,14 @@ export default function ChoghadiyaPage() {
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontSize: 12, color: "#333" }}>{e.quality.replace("_", " ")}</div>
-                  <button onClick={() => { navigator.clipboard?.writeText(`${e.kind} ${startLocal} → ${endLocal}`); alert("Copied"); }} style={{ marginTop: 8 }}>Copy</button>
+                  <button onClick={() => {
+                    const text = `${e.kind} ${startLocal} → ${endLocal}`;
+                    if (typeof navigator !== "undefined" && navigator.clipboard) {
+                      navigator.clipboard.writeText(text).then(() => alert("Copied"), () => alert("Copy failed"));
+                    } else {
+                      alert(text);
+                    }
+                  }} style={{ marginTop: 8 }}>Copy</button>
                 </div>
               </div>
             );
