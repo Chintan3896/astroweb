@@ -101,12 +101,17 @@ export default function Home() {
         <ThemeSelector theme={theme} setTheme={setTheme} />
 
         <div className="flex justify-center mb-3">
-          <DatePicker
-            selected={date}
-            onChange={(d) => d && setDate(d)}
-            className="border px-3 py-2 rounded-lg"
-            dateFormat="dd MMMM yyyy"
-          />
+        <DatePicker
+          selected={date}
+          onChange={(d: Date | null) => {
+            if (d) setDate(d);
+          }}
+          className="border px-3 py-2 rounded-lg"
+          dateFormat="dd MMMM yyyy"
+          selectsRange={false}
+          selectsMultiple={false}
+        />
+
         </div>
 
         <p className="text-center text-sm opacity-70 mb-6">
